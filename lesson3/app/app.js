@@ -6,8 +6,7 @@ var superAgent = require('superagent');
 var cheerio = require('cheerio');
 var app = express();
 app.get('/', function (req, res) {
-    var url = 'https://cnodejs.org/';
-    var $;
+    var url = 'https://cnodejs.org';
     var items = [];
     superAgent
         .get(url)
@@ -16,14 +15,25 @@ app.get('/', function (req, res) {
         'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:39.0) Gecko/20100101 Firefox/39.0"
     })
         .end(function (err, response) {
-        if (response.status === 200) {
-            $ = cheerio.load(response.text);
+        if (err) {
+            console.log(err.status);
+            return false;
         }
-        $('#topic_list .topic_title').each(function (index, item) {
+        // 如果真的出错了,那么response将会是undefined,这时候访问status属性会出错,所以还是
+        // 得有上面代码的错误检查
+        if (response.status === 200) {
+            var $ = cheerio.load(response.text);
+        }
+        $('#topic_list .cell').each(function (index, item) {
             var $item = $(item);
+            // 每一篇文章的url
+            var itemURL = url + $item.find('.topic_title').attr('href');
+            var author = $item.find('.user_avatar > img').attr('title');
+            var title = $item.find('.topic_title').attr('title');
             items.push({
-                title: $item.attr('title'),
-                href: url + $item.attr('href')
+                title: title,
+                href: itemURL,
+                author: author
             });
         });
         if (items) {
